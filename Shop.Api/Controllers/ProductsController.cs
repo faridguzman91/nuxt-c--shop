@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shop.Api.Data;
+using Shop.Api.Dtos;
 using Shop.Api.Models;
 
 namespace Shop.Api.Controllers;
@@ -25,19 +26,26 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Product>> Create(Product product)
+    public async Task<ActionResult<Product>> Create(CreateProductDto dto)
     {
+        var product = new Product { Name = dto.Name, Description = dto.Description, Price = dto.Price, Stock = dto.Stock };
         _db.Products.Add(product);
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, Product input)
+    public async Task<IActionResult> Update(int id, UpdateProductDto dto)
     {
-        if (id != input.Id)
-            return BadRequest();
-        _db.Entry(input).State = EntityState.Modified;
+        var product = await _db.Products.FindAsync(id);
+        if (product is null)
+            return NotFound();
+
+        product.Name        = dto.Name;
+        product.Description = dto.Description;
+        product.Price       = dto.Price;
+        product.Stock       = dto.Stock;
+
         await _db.SaveChangesAsync();
         return NoContent();
     }
